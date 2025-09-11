@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task 2 - Treasure Hunt</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 🔥 Firebase SDK - ADD THESE 3 LINES -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="task-header">
+            <h1>🔍 Task 2</h1>
+            <div class="progress-bar">
+                <div class="progress" style="width: 50%;"></div>
+            </div>
+        </div>
+        
+        <div class="verification-section">
+            <h2>🔐 Verification Required</h2>
+            <div class="form-group">
+                <label for="teamId2">Team ID:</label>
+                <input type="text" id="teamId2" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+                <label for="previousCode">Previous Task Code:</label>
+                <input type="text" id="previousCode" maxlength="5">
+            </div>
+            <button onclick="verifyTask2()" id="verifyBtn">Verify & Continue</button>
+        </div>
+        
+        <div class="clue-section" id="clueSection" style="display: none;">
+            <h2>🎉 Welcome Team <span id="teamDisplayName">TEAM</span>!</h2>
+            <h2>🧩 Your Clue:</h2>
+            <div class="clue-box">
+                <p>"ना कोई ऑफिस बिना इसके चलता है, और ना ही आगंतुक बिना यहाँ रुके निकलता है। वह जगह जहाँ मुस्कान से स्वागत होता है, वहीं अगला इशारा चुपचाप बैठा होता है।"</p>
+            </div>
+            
+            <div class="task-code-section">
+                <h3>📝 Task Code to Remember:</h3>
+                <div class="task-code">TC242</div>
+                <p class="task-note">Remember this code! You'll need it for the next task.</p>
+            </div>
+            
+            <button onclick="completeTask2()" id="completeBtn2">Mark Task 2 Complete</button>
+        </div>
+        
+        <div class="navigation">
+            <button onclick="goHome()" class="btn-secondary">🏠 Home</button>
+        </div>
+    </div>
+    
+    <!-- 🔥 CHANGED: Use firebase-script.js instead of script.js -->
+    <script src="firebase-script.js"></script>
+    <script>
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        
+        window.onload = function() {
+            const urlTeamId = getURLParameter('team');
+            if (urlTeamId) {
+                document.getElementById('teamId2').value = urlTeamId.toUpperCase();
+            }
+            displayTeamInfo();
+            loadTaskStatus();
+        };
+        
+        function loadTaskStatus() {
+            const teamId = document.getElementById('teamId2').value || firebaseGame.getCurrentTeamId();
+            if (!teamId) return;
+            
+            firebaseGame.getTeamProgress(teamId).then(progress => {
+                if (progress && progress.completedTasks >= 2) {
+                    // Already completed Task 2
+                    document.getElementById('clueSection').style.display = 'block';
+                    document.getElementById('teamDisplayName').textContent = teamId;
+                    document.getElementById('completeBtn2').textContent = '✅ Task 2 Completed';
+                    document.getElementById('completeBtn2').disabled = true;
+                    document.getElementById('completeBtn2').style.opacity = '0.7';
+                }
+            });
+        }
+        
+        function displayTeamInfo() {
+            // Compatibility function
+        }
+    </script>
+</body>
+</html> 

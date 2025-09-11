@@ -11,7 +11,7 @@ function setTeamId() {
     localStorage.setItem("teamId", teamId);
 
     // Redirect to Task 1 page
-    window.location.href = "task1.html";
+    window.location.href = "ghdybt.html";
 }
 
 // 🛠️ Admin accesses dashboard
