@@ -82,7 +82,7 @@ def create_qr_code_with_label(url, label, filename):
 
 def main():
     # 🚨 YOUR GITHUB PAGES URL
-    base_url = "https://prathameshgabhane.github.io/treasurehunt_vois_pg/"
+    base_url = "https://prathameshgabhane.github.io/treasurehunt_vois_sp/"
     
     print("🎯 Generating QR Codes for Treasure Hunt Game")
     print("=" * 50)
@@ -95,29 +95,29 @@ def main():
     # Define the 4 basic QR codes (teams enter their ID manually)
     tasks = [
         {
-            "url": f"{base_url}/ghdybt.html",
+            "url": f"{base_url}/bniexa.html",
             "label": "Task 1 - Start Your Hunt!", 
-            "filename": "qr_codes/ghdybt_qr.png"
+            "filename": "qr_codes/bniexa_qr.png"
         },
         {
-            "url": f"{base_url}/gwnuqf.html",
+            "url": f"{base_url}/qbltlk.html",
             "label": "Task 2 - Second Clue", 
-            "filename": "qr_codes/gwnuqf_qr.png"
+            "filename": "qr_codes/qbltlk_qr.png"
         },
         {
-            "url": f"{base_url}/eftulo.html",
+            "url": f"{base_url}/anoeen.html",
             "label": "Task 3 - Third Clue", 
-            "filename": "qr_codes/eftulo_qr.png"
+            "filename": "qr_codes/anoeen_qr.png"
         },
         {
-            "url": f"{base_url}/cgyixt.html",
+            "url": f"{base_url}/mchdwq.html",
             "label": "Task 4 - Fourth Challenge", 
-            "filename": "qr_codes/cgyixt_qr.png"
+            "filename": "qr_codes/mchdwq_qr.png"
         },
         {
-            "url": f"{base_url}/wgucsh.html",
+            "url": f"{base_url}/awnibc.html",
             "label": "Task 5 - WINNER!", 
-            "filename": "qr_codes/wgucsh_qr.png"
+            "filename": "qr_codes/awnibc_qr.png"
         }
     ]
     
