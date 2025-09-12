@@ -10,13 +10,13 @@
    ========================= */
 // TODO: replace with your real Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+  apiKey: "AIzaSyBzIQZ_sj3m95_bEP16yzyyDL37cZjUZd0",
+  authDomain: "treasure-hunt-game-1f9e6.firebaseapp.com",
+  projectId: "treasure-hunt-game-1f9e6",
+  storageBucket: "treasure-hunt-game-1f9e6.firebasestorage.app",
+  messagingSenderId: "662097284199",
+  appId: "1:662097284199:web:e2cbd6b3ff7bb219fa18c2",
+  measurementId: "G-5BF32EW0CT"
 };
 
 if (!firebase.apps.length) {
