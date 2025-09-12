@@ -1,392 +1,122 @@
-// 🔥 Firebase-Enabled Treasure Hunt Game
-// This version enables real-time multi-device data sharing
+// ============================
+// 🌟 Team starts the hunt
+// ============================
+function setTeamId() {
+    const teamId = document.getElementById("teamId").value.trim();
 
-// 🚨 YOUR ACTUAL FIREBASE CONFIG (CONVERTED TO COMPAT FORMAT)
-const firebaseConfig = {
-  apiKey: "AIzaSyBzIQZ_sj3m95_bEP16yzyyDL37cZjUZd0",
-  authDomain: "treasure-hunt-game-1f9e6.firebaseapp.com",
-  projectId: "treasure-hunt-game-1f9e6",
-  storageBucket: "treasure-hunt-game-1f9e6.firebasestorage.app",
-  messagingSenderId: "662097284199",
-  appId: "1:662097284199:web:e2cbd6b3ff7bb219fa18c2",
-  measurementId: "G-5BF32EW0CT"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-class FirebaseTreasureHunt {
-    constructor() {
-        this.taskCodes = {
-            1: "TC441",
-            2: "TC242", 
-            3: "TC803",
-            4: "TC200",
-            5: "WINNER"
-        };
-        
-        this.clues = {
-            1: "A place of passage, calm yet keen, where eyes unseen watch every scene.",
-            2: "Shiny and proud, it waits on high,Where winners cheer and spirits fly(Right)",
-            3: "If you lean down...you see the steps that move down 1 2 3.",
-            4: "A space where minds connect and plans unfold, your next clue hides in plain sight. ((120+135) -200) /10",
-            5: "🎊 CONGRATULATIONS! YOU WON! 🎊"
-        };
-        
-        this.currentTeamId = null;
-    }
-
-    async setTeamId(teamId) {
-        if (!teamId || teamId.trim() === '') return false;
-        
-        teamId = teamId.trim().toUpperCase();
-        this.currentTeamId = teamId;
-        
-        try {
-            const teamRef = db.collection('teams').doc(teamId);
-            const teamDoc = await teamRef.get();
-            
-            if (!teamDoc.exists) {
-                await teamRef.set({
-                    id: teamId,
-                    completedTasks: 0,
-                    currentTask: 1,
-                    startTime: firebase.firestore.FieldValue.serverTimestamp(),
-                    completionTime: null,
-                    taskHistory: [],
-                    status: 'active'
-                });
-                console.log(`🔥 Team ${teamId} created in Firebase`);
-            }
-            
-            localStorage.setItem('currentTeamId', teamId);
-            return true;
-        } catch (error) {
-            console.error('Error setting team ID:', error);
-            return false;
-        }
-    }
-
-    getCurrentTeamId() {
-        return this.currentTeamId || localStorage.getItem('currentTeamId');
-    }
-
-    async verifyTaskCode(teamId, expectedCode, actualCode) {
-        if (!teamId || !actualCode) return false;
-        
-        try {
-            const teamRef = db.collection('teams').doc(teamId);
-            const teamDoc = await teamRef.get();
-            
-            if (!teamDoc.exists) {
-                await this.setTeamId(teamId);
-                return false;
-            }
-            
-            const teamData = teamDoc.data();
-            const currentTask = teamData.currentTask;
-            
-            if (expectedCode !== this.taskCodes[currentTask - 1]) {
-                alert('Invalid sequence! Complete tasks in order.');
-                return false;
-            }
-            
-            if (actualCode.toUpperCase() !== expectedCode) {
-                alert('Incorrect task code! Try again.');
-                return false;
-            }
-            
-            return true;
-        } catch (error) {
-            console.error('Error verifying task code:', error);
-            return false;
-        }
-    }
-
-    async completeTask(taskNumber, teamId = null) {
-        teamId = teamId || this.getCurrentTeamId();
-        if (!teamId) {
-            alert('No team ID set!');
-            return false;
-        }
-
-        try {
-            const teamRef = db.collection('teams').doc(teamId);
-            const teamDoc = await teamRef.get();
-            
-            if (!teamDoc.exists) {
-                await this.setTeamId(teamId);
-            }
-
-            const now = firebase.firestore.FieldValue.serverTimestamp();
-            const regularTimestamp = new Date();
-            
-            const updates = {
-                completedTasks: taskNumber,
-                currentTask: taskNumber + 1,
-                [`task${taskNumber}CompletedAt`]: now
-            };
-            
-            if (taskNumber === 5) {
-                updates.completionTime = now;
-                updates.status = 'completed';
-                updates.currentTask = 'completed';
-            }
-            
-            const existingData = teamDoc.exists ? teamDoc.data() : {};
-            const taskHistory = existingData.taskHistory || [];
-            taskHistory.push({
-                taskNumber: taskNumber,
-                completedAt: regularTimestamp,
-                taskCode: this.taskCodes[taskNumber]
-            });
-            updates.taskHistory = taskHistory;
-            
-            await teamRef.set(updates, { merge: true });
-            
-            await db.collection('submissions').add({
-                teamId: teamId,
-                taskNumber: taskNumber,
-                taskCode: this.taskCodes[taskNumber],
-                timestamp: regularTimestamp
-            });
-
-            console.log(`🔥 Task ${taskNumber} completed for team ${teamId}`);
-            
-            if (taskNumber === 5) {
-                alert('🏆 Congratulations! You have completed the treasure hunt!');
-            } else {
-                alert(`✅ Task ${taskNumber} completed! Move to the next location.`);
-            }
-            
-            return true;
-        } catch (error) {
-            console.error('Error completing task:', error);
-            alert('Error saving progress. Please try again.');
-            return false;
-        }
-    }
-
-    async getTeamProgress(teamId) {
-        try {
-            const teamRef = db.collection('teams').doc(teamId);
-            const teamDoc = await teamRef.get();
-            
-            if (teamDoc.exists) {
-                return teamDoc.data();
-            }
-            return null;
-        } catch (error) {
-            console.error('Error getting team progress:', error);
-            return null;
-        }
-    }
-
-    async getAllTeams() {
-        try {
-            const teamsSnapshot = await db.collection('teams')
-                .orderBy('completionTime', 'asc')
-                .get();
-            const teams = [];
-            
-            teamsSnapshot.forEach(doc => {
-                teams.push(doc.data());
-            });
-            
-            return teams;
-        } catch (error) {
-            console.error('Error getting all teams:', error);
-            return [];
-        }
-    }
-
-    // 🔥 Real-time listener for admin dashboard (sorted by completion time ascending)
-    listenToTeamUpdates(callback) {
-        return db.collection('teams')
-            .orderBy('completionTime', 'asc')
-            .onSnapshot(snapshot => {
-                const teams = [];
-                snapshot.forEach(doc => {
-                    teams.push(doc.data());
-                });
-                callback(teams);
-            });
-    }
-
-    async getSubmissions() {
-        try {
-            const submissionsSnapshot = await db.collection('submissions')
-                .orderBy('timestamp', 'desc')
-                .get();
-            
-            const submissions = [];
-            submissionsSnapshot.forEach(doc => {
-                submissions.push(doc.data());
-            });
-            
-            return submissions;
-        } catch (error) {
-            console.error('Error getting submissions:', error);
-            return [];
-        }
-    }
-
-    async clearAllData() {
-        if (!confirm('Are you sure you want to clear ALL game data? This cannot be undone!')) {
-            return false;
-        }
-
-        try {
-            const teamsSnapshot = await db.collection('teams').get();
-            const batch = db.batch();
-            
-            teamsSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            
-            const submissionsSnapshot = await db.collection('submissions').get();
-            submissionsSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            
-            await batch.commit();
-            
-            localStorage.clear();
-            
-            alert('✅ All data cleared successfully!');
-            return true;
-        } catch (error) {
-            console.error('Error clearing data:', error);
-            alert('Error clearing data. Please try again.');
-            return false;
-        }
-    }
-
-    async exportData() {
-        try {
-            const teams = await this.getAllTeams();
-            const submissions = await this.getSubmissions();
-            
-            const exportData = {
-                teams: teams,
-                submissions: submissions,
-                exportedAt: new Date().toISOString()
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `treasure_hunt_data_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            return true;
-        } catch (error) {
-            console.error('Error exporting data:', error);
-            alert('Error exporting data.');
-            return false;
-        }
-    }
-}
-
-const firebaseGame = new FirebaseTreasureHunt();
-
-function initializeAdminDashboard() {
-    if (typeof updateLeaderboard === 'function') {
-        firebaseGame.listenToTeamUpdates(teams => {
-            updateLeaderboard(teams);
-            updateStatistics(teams);
-        });
-    }
-}
-
-// 🔥 Update leaderboard WITHOUT Rank column
-function updateLeaderboard(teams) {
-    const leaderboardBody = document.getElementById('leaderboardBody');
-    if (!leaderboardBody) return;
-    
-    if (teams.length === 0) {
-        leaderboardBody.innerHTML = '<tr><td colspan="5" class="no-data">No teams registered yet</td></tr>';
+    if (teamId === "") {
+        alert("Please enter a valid Team ID");
         return;
     }
-    
-    let html = '';
-    teams.forEach(team => {
-        const progress = `${team.completedTasks}/5`;
-        
-        let currentTask, status;
-        if (team.completedTasks === 5) {
-            currentTask = '🏆 WINNER!';
-            status = '🏆 CHAMPION!';
-        } else if (team.status === 'completed' && team.completedTasks === 4) {
-            currentTask = 'Task 5 - Final Challenge';
-            status = '🎯 At Final Task';
-        } else if (team.currentTask === 'completed') {
-            currentTask = 'COMPLETED!';
-            status = '🏆 Winner';
-        } else {
-            currentTask = `Task ${team.currentTask}`;
-            status = '🎮 Playing';
+
+    localStorage.setItem("teamId", teamId);
+    window.location.href = "task1.html"; // Start from Task 1
+}
+
+// ============================
+// 🌟 Navigate between tasks
+// ============================
+function goToTask(taskNumber) {
+    window.location.href = `task${taskNumber}.html`;
+}
+
+// ============================
+// 🌟 Save team progress
+// ============================
+function saveProgress(taskNumber, isCompleted = false) {
+    const teamId = localStorage.getItem("teamId");
+    if (!teamId) {
+        alert("Team ID not found! Please restart.");
+        window.location.href = "index.html";
+        return;
+    }
+
+    const dbRef = firebase.database().ref("teams/" + teamId);
+
+    dbRef.once("value").then(snapshot => {
+        let data = snapshot.val() || {};
+        let completedTasks = data.completedTasks || 0;
+
+        if (isCompleted) {
+            completedTasks = Math.max(completedTasks, taskNumber); // update progress
         }
-        
-        const completionTime = team.completionTime ? 
-            new Date(team.completionTime.toDate()).toLocaleTimeString() : '-';
-        
-        const rowClass = team.completedTasks === 5 ? 'winner-team' : 
-                        (team.status === 'completed' ? 'completed-team' : '');
-        
-        html += `
-            <tr class="${rowClass}">
-                <td><strong>${team.id}</strong></td>
-                <td>${progress}</td>
-                <td>${currentTask}</td>
-                <td>${completionTime}</td>
-                <td>${status}</td>
-            </tr>
-        `;
+
+        let progress = `${completedTasks}/5`;
+
+        dbRef.update({
+            progress: progress,
+            completedTasks: completedTasks
+        });
+
+        if (taskNumber < 5) {
+            goToTask(taskNumber + 1);
+        } else {
+            alert("🎉 Congratulations! You have finished all tasks!");
+        }
     });
-    
-    leaderboardBody.innerHTML = html;
 }
 
-function updateStatistics(teams) {
-    const totalTeams = teams.length;
-    const completedTeams = teams.filter(team => team.completedTasks === 5).length;
-    const inProgressTeams = totalTeams - completedTeams;
-    
-    if (document.getElementById('totalTeams')) {
-        document.getElementById('totalTeams').textContent = totalTeams;
-        document.getElementById('completedTeams').textContent = completedTeams;
-        document.getElementById('inProgressTeams').textContent = inProgressTeams;
-    }
+// ============================
+// 🌟 Fetch leaderboard
+// ============================
+function loadLeaderboard() {
+    const dbRef = firebase.database().ref("teams");
+    dbRef.on("value", (snapshot) => {
+        const data = [];
+        snapshot.forEach((childSnapshot) => {
+            const val = childSnapshot.val();
+            data.push({
+                teamId: childSnapshot.key,
+                time: val.time ? Number(val.time) : null,
+                progress: val.progress ? val.progress : "0/5"
+            });
+        });
+        updateLeaderboard(data);
+    });
 }
 
-// --- GAME FUNCTIONS (unchanged from your version, kept for completeness) ---
-async function setTeamIdTask1() { /* same as before */ }
-async function verifyTask2() { /* same as before */ }
-async function verifyTask3() { /* same as before */ }
-async function verifyTask4() { /* same as before */ }
-async function completeTask1() { /* same as before */ }
-async function completeTask2() { /* same as before */ }
-async function completeTask3() { /* same as before */ }
-async function completeTask4() { /* same as before */ }
-async function verifyTask5() { /* same as before */ }
-async function completeTask5() { /* same as before */ }
+// ============================
+// 🌟 Update leaderboard
+// ============================
+function updateLeaderboard(data) {
+    // Split teams into with-time and without-time
+    const withTime = data.filter(entry => entry.time !== null && !isNaN(entry.time));
+    const withoutTime = data.filter(entry => entry.time === null || isNaN(entry.time));
 
-function celebrateWinner() { /* same as before */ }
-function goHome() { window.location.href = 'index.html'; }
-function goToAdmin() { window.location.href = 'admin.html'; }
+    // Sort with-time by ascending time
+    withTime.sort((a, b) => a.time - b.time);
 
-async function canAccessTask(teamId, taskNumber) { /* same as before */ }
-function showSequenceError(taskNumber) { /* same as before */ }
+    // Sort without-time by progress (descending)
+    withoutTime.sort((a, b) => {
+        const aProgress = parseInt(a.progress.split("/")[0]);
+        const bProgress = parseInt(b.progress.split("/")[0]);
+        if (bProgress !== aProgress) {
+            return bProgress - aProgress; // higher progress first
+        }
+        return a.teamId.localeCompare(b.teamId); // tie-breaker by teamId
+    });
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.pathname.includes('admin.html')) {
-        initializeAdminDashboard();
-    }
-});
+    // Merge both lists
+    const leaderboard = [...withTime, ...withoutTime];
 
-console.log('🔥 Firebase Treasure Hunt Game Initialized');
-window.firebaseGame = firebaseGame;
+    // Assign ranks in sequence
+    leaderboard.forEach((entry, index) => {
+        entry.rank = index + 1;
+    });
+
+    // Render leaderboard
+    const tableBody = document.getElementById("leaderboardBody");
+    if (!tableBody) return; // avoid errors if leaderboard page not loaded
+    tableBody.innerHTML = "";
+
+    leaderboard.forEach(entry => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${entry.rank}</td>
+            <td>${entry.teamId}</td>
+            <td>${entry.progress}</td>
+            <td>${entry.time !== null ? entry.time : "-"}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
